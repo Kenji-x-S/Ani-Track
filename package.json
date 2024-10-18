@@ -25,6 +25,7 @@
     "emoji-picker-react": "^4.4.10",
     "jsonwebtoken": "^9.0.1",
     "mongoose": "^7.4.2",
+    "mysql2": "^3.11.3",
     "next": "13.4.9",
     "next-auth": "^4.22.5",
     "postcss": "8.4.25",
