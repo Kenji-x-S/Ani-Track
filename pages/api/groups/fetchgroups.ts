@@ -20,24 +20,37 @@ export default async function handler(
       return res.json({ error: "Unauthorized" });
     }
     const pool = await getPool();
-    let threads: any[] = [];
+    let groups: any[] = [];
 
     const [rows]: any = await pool.execute(
-      `SELECT * FROM threads ORDER BY createdAt DESC`
+      `SELECT * FROM groups ORDER BY createdAt DESC`
     );
     for (const r of rows) {
       const [creator]: any = await pool.execute(
         `SELECT * FROM users WHERE id = ?`,
         [r.creatorId]
       );
+      const [threadUsers]: any = await pool.execute(
+        `SELECT * FROM groupusers WHERE groupId = ?`,
+        [r.id]
+      );
+      const groupUsersConnected = [];
+      for (const t of threadUsers) {
+        const [user]: any = await pool.execute(
+          `SELECT * FROM users WHERE id = ?`,
+          [t.userId]
+        );
+        groupUsersConnected.push(user[0]);
+      }
 
-      threads.push({
+      groups.push({
         ...r,
         creator: creator[0],
+        groupUsers: groupUsersConnected,
       });
     }
     res.status(StatusCodes.OK);
-    res.json(threads);
+    res.json(groups);
   } catch (error) {
     console.error(error);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR);

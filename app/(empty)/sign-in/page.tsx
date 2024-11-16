@@ -15,7 +15,6 @@ import axios, { AxiosResponse } from "axios";
 import { useFormik } from "formik";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import * as Yup from "yup";
 export default function LoginForm() {
   const router = useRouter();
@@ -65,7 +64,7 @@ export default function LoginForm() {
             username: values.username,
             password: values.password,
             redirect: false,
-            callbackUrl: `/threads`,
+            callbackUrl: `/anime`,
           });
           if (response?.error) {
             toast({
@@ -78,6 +77,7 @@ export default function LoginForm() {
               title: "Success",
               description: "Login successful",
             });
+            router.push("/anime");
           }
         } catch (error: any) {
           toast({

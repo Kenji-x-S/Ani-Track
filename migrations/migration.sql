@@ -13,24 +13,13 @@ CREATE TABLE `users` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `anime` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `title` VARCHAR(191) NOT NULL,
-    `description` VARCHAR(191) NULL,
-    `genres` VARCHAR(191) NOT NULL,
-    `averageRating` DOUBLE NOT NULL DEFAULT 0,
-
-    UNIQUE INDEX `anime_title_key`(`title`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `animelist` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `userId` INTEGER NOT NULL,
     `animeId` INTEGER NOT NULL,
     `status` ENUM('Watching', 'Completed', 'Dropped', 'PlanToWatch') NOT NULL,
-    `rating` INTEGER NULL DEFAULT 1,
+    `rating` INTEGER NULL,
+    `review` VARCHAR(191) NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -66,21 +55,34 @@ CREATE TABLE `chatmessage` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `threads` (
+CREATE TABLE `groups` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `image` VARCHAR(191) NULL,
     `creatorId` INTEGER NOT NULL,
-    `threadTitle` VARCHAR(191) NOT NULL,
-    `threadDescription` VARCHAR(191) NOT NULL,
-    `createdDate` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `title` VARCHAR(191) NOT NULL,
+    `description` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `threadusers` (
+CREATE TABLE `threads` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `threadId` INTEGER NOT NULL,
+    `groupId` INTEGER NOT NULL,
+    `image` VARCHAR(191) NULL,
+    `creatorId` INTEGER NOT NULL,
+    `threadTitle` VARCHAR(191) NOT NULL,
+    `threadDescription` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `groupusers` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `groupId` INTEGER NOT NULL,
     `userId` INTEGER NOT NULL,
 
     PRIMARY KEY (`id`)
@@ -102,9 +104,6 @@ CREATE TABLE `comment` (
 ALTER TABLE `animelist` ADD CONSTRAINT `animelist_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `animelist` ADD CONSTRAINT `animelist_animeId_fkey` FOREIGN KEY (`animeId`) REFERENCES `anime`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE `follows` ADD CONSTRAINT `follows_followerId_fkey` FOREIGN KEY (`followerId`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -114,13 +113,19 @@ ALTER TABLE `follows` ADD CONSTRAINT `follows_followingId_fkey` FOREIGN KEY (`fo
 ALTER TABLE `chatmessage` ADD CONSTRAINT `chatmessage_chatId_fkey` FOREIGN KEY (`chatId`) REFERENCES `chat`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `groups` ADD CONSTRAINT `groups_creatorId_fkey` FOREIGN KEY (`creatorId`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `threads` ADD CONSTRAINT `threads_creatorId_fkey` FOREIGN KEY (`creatorId`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `threadusers` ADD CONSTRAINT `threadusers_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `threads` ADD CONSTRAINT `threads_groupId_fkey` FOREIGN KEY (`groupId`) REFERENCES `groups`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `threadusers` ADD CONSTRAINT `threadusers_threadId_fkey` FOREIGN KEY (`threadId`) REFERENCES `threads`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `groupusers` ADD CONSTRAINT `groupusers_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `groupusers` ADD CONSTRAINT `groupusers_groupId_fkey` FOREIGN KEY (`groupId`) REFERENCES `groups`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `comment` ADD CONSTRAINT `comment_threadId_fkey` FOREIGN KEY (`threadId`) REFERENCES `threads`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

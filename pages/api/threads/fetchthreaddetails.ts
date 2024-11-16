@@ -35,33 +35,12 @@ export default async function handler(
       `SELECT * FROM users WHERE id = ?`,
       [rows[0].creatorId]
     );
-    const [threadUsers]: any = await pool.execute(
-      `SELECT * FROM threadusers WHERE threadId = ?`,
-      [rows[0].id]
-    );
-    const threadUsersConnected = [];
-    for (const t of threadUsers) {
-      const [user]: any = await pool.execute(
-        `SELECT * FROM users WHERE id = ?`,
-        [t.userId]
-      );
-      threadUsersConnected.push(user[0]);
-    }
     const comments = await getCommentsForThread(rows[0].id);
     const thread = {
       ...rows[0],
       creator: creator[0],
-      threadUsers: threadUsersConnected,
       comments,
     };
-
-    if (
-      !thread.threadUsers?.find((user: any) => user.id === session.user.id) ||
-      !thread.creator.id === session.user.id
-    ) {
-      res.status(StatusCodes.FORBIDDEN);
-      res.json({ error: "You are not authorized to view this thread" });
-    }
 
     res.status(StatusCodes.OK);
     res.json(thread);

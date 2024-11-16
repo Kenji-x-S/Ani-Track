@@ -20,24 +20,19 @@ export default async function handler(
       return res.json({ error: "Unauthorized" });
     }
     const pool = await getPool();
-    let threads: any[] = [];
-
-    const [rows]: any = await pool.execute(
-      `SELECT * FROM threads ORDER BY createdAt DESC`
-    );
-    for (const r of rows) {
-      const [creator]: any = await pool.execute(
-        `SELECT * FROM users WHERE id = ?`,
-        [r.creatorId]
+    if (req.body.check) {
+      await pool.execute(
+        `INSERT INTO follows (followerId, followingId) VALUES (?, ?)`,
+        [session.user.id, req.body.id]
       );
-
-      threads.push({
-        ...r,
-        creator: creator[0],
-      });
+    } else {
+      await pool.execute(
+        `DELETE FROM follows WHERE followerId = ? AND followingId = ?`,
+        [session.user.id, req.body.id]
+      );
     }
     res.status(StatusCodes.OK);
-    res.json(threads);
+    res.json(true);
   } catch (error) {
     console.error(error);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR);

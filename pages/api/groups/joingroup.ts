@@ -3,14 +3,6 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getPool } from "@/lib/pool";
 import { getServerSession } from "next-auth";
 import { options } from "../auth/[...nextauth]";
-import uploadFile from "@/lib/uploader";
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: "300mb",
-    },
-  },
-};
 
 export default async function handler(
   req: NextApiRequest,
@@ -26,29 +18,17 @@ export default async function handler(
     return res.json({ error: "Unauthorized" });
   }
 
-  const { threadTitle, threadDescription } = req.body;
-
-  if (!threadTitle || !threadDescription) {
-    res.status(StatusCodes.BAD_REQUEST);
-    return res.json({ error: "All fields are required" });
-  }
-
   try {
     const pool = await getPool();
-    let image;
-    if (req.body.uploadCheck) {
-      image = await uploadFile(req.body.image);
-    } else {
-      req.body.image;
-    }
-    const [result]: any = await pool.execute(
-      `UPDATE threads SET threadTitle = ?, threadDescription = ?, image = ? WHERE id = ?`,
-      [threadTitle, threadDescription, image ? image : null, req.body.id]
+
+    await pool.execute(
+      `INSERT INTO groupusers (groupId, userId) VALUES (?, ?)`,
+      [req.body.id, session.user.id]
     );
 
     res.status(StatusCodes.CREATED);
     res.json({
-      message: "Thread updated successfully",
+      message: "Group joined successfully",
     });
   } catch (error) {
     console.error("Error creating user:", error);

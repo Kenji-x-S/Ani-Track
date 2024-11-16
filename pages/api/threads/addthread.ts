@@ -26,9 +26,9 @@ export default async function handler(
     return res.json({ error: "Unauthorized" });
   }
 
-  const { threadTitle, threadDescription } = req.body;
+  const { threadTitle, threadDescription, groupId } = req.body;
 
-  if (!threadTitle || !threadDescription) {
+  if (!threadTitle || !threadDescription || !groupId) {
     res.status(StatusCodes.BAD_REQUEST);
     return res.json({ error: "All fields are required" });
   }
@@ -40,8 +40,14 @@ export default async function handler(
       image = await uploadFile(req.body.image);
     }
     const [result]: any = await pool.execute(
-      `INSERT INTO threads (creatorId, threadTitle, threadDescription, image) VALUES (?, ?, ?, ?)`,
-      [session.user.id, threadTitle, threadDescription, image]
+      `INSERT INTO threads (creatorId, threadTitle, threadDescription, image, groupId) VALUES (?, ?, ?, ?, ?)`,
+      [
+        session.user.id,
+        threadTitle,
+        threadDescription,
+        image ? image : null,
+        groupId,
+      ]
     );
 
     res.status(StatusCodes.CREATED);

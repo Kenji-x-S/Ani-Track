@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, Settings, User } from "lucide-react";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function TopNav() {
   const links = [
@@ -19,13 +20,26 @@ export default function TopNav() {
       title: "Threads",
       href: "/threads",
     },
+    {
+      title: "Groups",
+      href: "/groups",
+    },
+    {
+      title: "Anime",
+      href: "/anime",
+    },
+    {
+      title: "People",
+      href: "/users",
+    },
   ];
   const { data: session } = useSession();
+  const router = useRouter();
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-16 py-6">
       <div className="flex justify-between items-center">
         <p>Ani Track</p>
-        <div className="flex justify-between items-center gap-2">
+        <div className="flex justify-between items-center gap-4">
           {links.map((link) => (
             <Link key={link.title} href={link.href}>
               {link.title}
@@ -58,7 +72,7 @@ export default function TopNav() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/profile")}>
               <User className="mr-2 h-4 w-4" />
               <span>Profile</span>
             </DropdownMenuItem>

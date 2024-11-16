@@ -26,9 +26,9 @@ export default async function handler(
     return res.json({ error: "Unauthorized" });
   }
 
-  const { threadTitle, threadDescription } = req.body;
+  const { title, description } = req.body;
 
-  if (!threadTitle || !threadDescription) {
+  if (!title || !description) {
     res.status(StatusCodes.BAD_REQUEST);
     return res.json({ error: "All fields are required" });
   }
@@ -38,17 +38,15 @@ export default async function handler(
     let image;
     if (req.body.uploadCheck) {
       image = await uploadFile(req.body.image);
-    } else {
-      req.body.image;
     }
     const [result]: any = await pool.execute(
-      `UPDATE threads SET threadTitle = ?, threadDescription = ?, image = ? WHERE id = ?`,
-      [threadTitle, threadDescription, image ? image : null, req.body.id]
+      `INSERT INTO groups (creatorId, title, description, image) VALUES (?, ?, ?, ?)`,
+      [session.user.id, title, description, image ? image : null]
     );
 
     res.status(StatusCodes.CREATED);
     res.json({
-      message: "Thread updated successfully",
+      message: "Group created successfully",
     });
   } catch (error) {
     console.error("Error creating user:", error);

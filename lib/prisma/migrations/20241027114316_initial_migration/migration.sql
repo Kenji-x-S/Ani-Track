@@ -72,7 +72,7 @@ CREATE TABLE `threads` (
     `creatorId` INTEGER NOT NULL,
     `threadTitle` VARCHAR(191) NOT NULL,
     `threadDescription` VARCHAR(191) NOT NULL,
-    `createdDate` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

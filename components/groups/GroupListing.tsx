@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 import { AlertInterface } from "@/types";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import AddThreadDialog from "./AddThreadDialog";
+import AddGroupDialog from "./AddGroupDialog";
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "../ui/dialog";
 import Alert from "../alert/Alert";
 import {
@@ -31,7 +31,7 @@ import { Settings } from "lucide-react";
 import { IconEdit, IconSettings, IconTrash } from "@tabler/icons-react";
 import Image from "next/image";
 
-export default function ThreadListing() {
+export default function GroupListing() {
   const { push } = useRouter();
   const { data: session, status } = useSession({
     required: true,
@@ -47,13 +47,10 @@ export default function ThreadListing() {
   const [refresh, setRefresh] = useState(false);
   const [action, setAction] = useState("create");
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [threadId, setThreadId] = useState<number | null>(null);
+  const [groupId, setGroupId] = useState<number | null>(null);
   const [alert, setAlert] = useState<AlertInterface | null>(null);
-  const [threads, setThreads] = useState([]);
-  const [filteredThreads, setFilteredThreads] = useState<Record<string, any>>(
-    []
-  );
   const [groups, setGroups] = useState([]);
+  const [filteredGroups, setFilteredGroups] = useState<Record<string, any>>([]);
 
   const [uploadCheck, setUploadCheck] = useState(false);
 
@@ -61,38 +58,36 @@ export default function ThreadListing() {
     setOpen(true);
   };
 
-  const [thread, setThread] = useState({
+  const [group, setGroup] = useState({
     image: "",
-    threadTitle: "",
-    threadDescription: "",
-    groupId: null,
+    title: "",
+    description: "",
   });
 
   const validationSchema = yup.object({
-    threadTitle: yup
+    title: yup
       .string()
-      .required("Thread Title is required")
-      .min(3, "Thread Title must be at least 3 characters")
-      .max(50, "Thread Title must be at most 50 characters"),
-    threadDescription: yup
+      .required("Group Title is required")
+      .min(3, "Group Title must be at least 3 characters")
+      .max(50, "Group Title must be at most 50 characters"),
+    description: yup
       .string()
-      .required("Thread Description is required")
-      .min(3, "Thread Description must be at least 3 characters")
-      .max(500, "Thread Description must be at most 500 characters"),
-    groupId: yup.number().required("Group is required"),
+      .required("Group Description is required")
+      .min(3, "Group Description must be at least 3 characters")
+      .max(500, "Group Description must be at most 500 characters"),
   });
 
   const formik = useFormik({
     validateOnChange: false,
     validateOnBlur: true,
-    initialValues: thread,
+    initialValues: group,
     validationSchema: validationSchema,
     onSubmit: (values) => {
-      let url = "/api/threads/addthread";
+      let url = "/api/groups/addgroup";
       if (action == "view") {
-        url = "/api/threads/updatethread";
+        url = "/api/groups/updategroup";
       }
-      const manageThread = async () => {
+      const manageGroup = async () => {
         try {
           setLoading(true);
           const response = await axios.post(url, { ...values, uploadCheck });
@@ -102,8 +97,8 @@ export default function ThreadListing() {
             title: "Success",
             description:
               action == "create"
-                ? "Thread Created Successfully"
-                : "Thread Updated Successfully",
+                ? "Group Created Successfully"
+                : "Group Updated Successfully",
             callback: () => {
               setAlert({ open: false });
             },
@@ -118,39 +113,17 @@ export default function ThreadListing() {
           handleClose();
         }
       };
-      manageThread();
+      manageGroup();
     },
   });
 
-  useEffect(() => {
-    const fetchThreads = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.post("/api/threads/fetchthreads");
-        setThreads(response.data);
-        setFilteredThreads(response.data);
-      } catch (error: any) {
-        toast.error(
-          error?.response?.data?.error || error?.error || error?.message
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchThreads();
-  }, [refresh]);
   useEffect(() => {
     const fetchGroups = async () => {
       try {
         setLoading(true);
         const response = await axios.post("/api/groups/fetchgroups");
-        setGroups(
-          response.data?.filter(
-            (g: any) =>
-              g.creatorId === session?.user?.id ||
-              g.groupUsers.some((u: any) => u.userId === session?.user?.id)
-          )
-        );
+        setGroups(response.data);
+        setFilteredGroups(response.data);
       } catch (error: any) {
         toast.error(
           error?.response?.data?.error || error?.error || error?.message
@@ -160,19 +133,19 @@ export default function ThreadListing() {
       }
     };
     fetchGroups();
-  }, [session]);
+  }, [refresh]);
 
   const deleteItem = async () => {
     try {
       setLoading(true);
       setOpenDeleteDialog(false);
-      const response = await axios.post("/api/threads/deletethread", {
-        id: threadId,
+      const response = await axios.post("/api/groups/deletegroup", {
+        id: groupId,
       });
       setAlert({
         open: true,
         title: "Success",
-        description: "Thread Deleted Successfully",
+        description: "Group Deleted Successfully",
         callback: () => {
           setAlert({ open: false });
         },
@@ -187,11 +160,27 @@ export default function ThreadListing() {
       setRefresh((prev) => !prev);
     }
   };
-  const joinThread = async (id: number) => {
+  const joinGroup = async (id: number) => {
     try {
       setLoading(true);
       setOpenDeleteDialog(false);
-      const response = await axios.post("/api/threads/jointhread", {
+      const response = await axios.post("/api/groups/joingroup", {
+        id,
+      });
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.error || error?.error || error?.message
+      );
+    } finally {
+      setLoading(false);
+      setRefresh((prev) => !prev);
+    }
+  };
+  const leaveGroup = async (id: number) => {
+    try {
+      setLoading(true);
+      setOpenDeleteDialog(false);
+      const response = await axios.post("/api/groups/leavegroup", {
         id,
       });
     } catch (error: any) {
@@ -220,15 +209,13 @@ export default function ThreadListing() {
   const handleSearch = (e: any) => {
     setSearch(e.target.value);
     if (e.target.value === "") {
-      setFilteredThreads(threads);
+      setFilteredGroups(groups);
     } else {
-      setFilteredThreads(
-        threads.filter(
+      setFilteredGroups(
+        groups.filter(
           (item: any) =>
-            item.threadTitle
-              ?.toLowerCase()
-              .includes(e.target.value.toLowerCase()) ||
-            item?.threadDescription
+            item.title?.toLowerCase().includes(e.target.value.toLowerCase()) ||
+            item?.description
               ?.toLowerCase()
               .includes(e.target.value.toLowerCase())
         )
@@ -242,13 +229,13 @@ export default function ThreadListing() {
         <Loader loading={loading} />
         <Alert alert={alert} />
         <CardHeader>
-          <CardTitle className="text-xl md:text-2xl">Threads</CardTitle>
+          <CardTitle className="text-xl md:text-2xl">Groups</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-2 justify-between mb-4">
             <Input
               className="w-full sm:max-w-xs"
-              placeholder="Search Threads"
+              placeholder="Search Groups"
               id="search"
               name="search"
               value={search}
@@ -259,12 +246,11 @@ export default function ThreadListing() {
               color="primary"
               className="w-full sm:w-auto"
             >
-              Create Thread
+              Create Group
             </Button>
           </div>
 
-          <AddThreadDialog
-            groups={groups}
+          <AddGroupDialog
             formik={formik}
             open={open}
             setOpen={setOpen}
@@ -277,7 +263,7 @@ export default function ThreadListing() {
           <Dialog open={openDeleteDialog}>
             <DialogContent>
               <DialogTitle className="text-center">
-                Are you sure you want to delete this thread?
+                Are you sure you want to delete this group?
               </DialogTitle>
               <DialogFooter>
                 <Button variant="destructive" onClick={deleteItem}>
@@ -289,7 +275,7 @@ export default function ThreadListing() {
           </Dialog>
 
           <div className="flex gap-4 flex-wrap">
-            {filteredThreads.map((t: any) => (
+            {filteredGroups.map((t: any) => (
               <Card>
                 <CardHeader>
                   <div className="flex gap-2 items-center">
@@ -308,17 +294,17 @@ export default function ThreadListing() {
                     </div>
                   </div>
                   <CardTitle>
-                    <h1>{t.threadTitle}</h1>
+                    <h1>{t.title}</h1>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {t.image && (
                     <Image src={t.image} alt="image" width={500} height={500} />
                   )}
-                  <p>{t.threadDescription}</p>
+                  <p>{t.description}</p>
                 </CardContent>
                 <CardFooter>
-                  {t.threadUsers?.slice(0, 5).map((u: any) => (
+                  {t.groupUsers?.slice(0, 5).map((u: any) => (
                     <Avatar className="h-8 w-8">
                       <AvatarImage
                         src={`/${u?.profilePicture}`}
@@ -330,7 +316,7 @@ export default function ThreadListing() {
                     </Avatar>
                   ))}
 
-                  {t.creatorId === session?.user?.id && (
+                  {t.creatorId === session?.user?.id ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="default">
@@ -348,7 +334,7 @@ export default function ThreadListing() {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
-                            setThreadId(t.id);
+                            setGroupId(t.id);
                             setOpenDeleteDialog(true);
                           }}
                         >
@@ -357,11 +343,22 @@ export default function ThreadListing() {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                  ) : (
+                    <div className="ml-2">
+                      {t.creatorId !== session?.user?.id &&
+                      !t.groupUsers?.find(
+                        (u: any) => u.id === session?.user?.id
+                      ) ? (
+                        <Button onClick={() => joinGroup(t.id)}>
+                          Join Group
+                        </Button>
+                      ) : (
+                        <Button onClick={() => leaveGroup(t.id)}>
+                          Leave Group
+                        </Button>
+                      )}
+                    </div>
                   )}
-
-                  <Button onClick={() => router.push(`/thread-posts/${t.id}`)}>
-                    View Posts
-                  </Button>
                 </CardFooter>
               </Card>
             ))}
