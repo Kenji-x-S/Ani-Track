@@ -1,7 +1,7 @@
 "use client";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import ThreadListing from "@/components/threads/ThreadListing";
+import PostsListing from "@/components/posts/PostListing";
 
 const SectionList = () => {
   const { push } = useRouter();
@@ -13,7 +13,7 @@ const SectionList = () => {
   });
   const pathname = usePathname();
   return (
-    <div className="w-full">{session ? <ThreadListing /> : <div></div>}</div>
+    <div className="w-full">{session ? <PostsListing /> : <div></div>}</div>
   );
 };
 

@@ -15,6 +15,7 @@ import { useToast } from "@/components/ui/use-toast";
 import axios, { AxiosResponse } from "axios";
 import { useFormik } from "formik";
 import { signIn, useSession } from "next-auth/react";
+import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import * as Yup from "yup";
@@ -113,11 +114,21 @@ export default function LoginForm() {
       createUser();
     },
   });
+  const { theme } = useTheme();
+
   return (
-    <div className="w-full min-h-screen flex justify-center items-center flex-col">
+    <div
+      className="w-full min-h-screen flex justify-center items-center flex-col  bg-center bg-cover"
+      style={{
+        background:
+          theme === "light"
+            ? "url('Ani-Track wht.png')"
+            : "url('Ani-Track blk.png')",
+      }}
+    >
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">Login</CardTitle>
+          <CardTitle className="text-2xl text-center">Sign Up</CardTitle>
           <CardDescription>
             Enter your details username and password to login to your account.
           </CardDescription>

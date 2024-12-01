@@ -26,9 +26,9 @@ export default async function handler(
     return res.json({ error: "Unauthorized" });
   }
 
-  const { threadTitle, threadDescription } = req.body;
+  const { title, description } = req.body;
 
-  if (!threadTitle || !threadDescription) {
+  if (!title || !description) {
     res.status(StatusCodes.BAD_REQUEST);
     return res.json({ error: "All fields are required" });
   }
@@ -42,8 +42,8 @@ export default async function handler(
       req.body.image;
     }
     const [result]: any = await pool.execute(
-      `UPDATE threads SET threadTitle = ?, threadDescription = ?, image = ? WHERE id = ?`,
-      [threadTitle, threadDescription, image ? image : null, req.body.id]
+      `UPDATE threads SET title = ?, description = ?, image = ? WHERE id = ?`,
+      [title, description, image ? image : null, req.body.id]
     );
 
     res.status(StatusCodes.CREATED);

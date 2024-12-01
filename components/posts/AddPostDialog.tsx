@@ -5,8 +5,17 @@ import { Label } from "@/components/ui/label";
 import { FormikProvider } from "formik";
 import "react-phone-number-input/style.css";
 import SingleFileUploader from "../ui/imageUploader";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import Error from "../ui/error";
 
-export default function AddGroupDialog({
+export default function AddPostDialog({
   open,
   setOpen,
   formik,
@@ -21,16 +30,16 @@ export default function AddGroupDialog({
         <FormikProvider value={formik}>
           <form encType="multipart/form-data" onSubmit={formik.handleSubmit}>
             <p className="font-bold">
-              {action === "create" ? "Create Thread" : "Update Thread"}
+              {action === "create" ? "Create Post" : "Update Post"}
             </p>
 
             <div className="mt-4">
               <Label htmlFor="title" className="font-semibold text-sm">
-                Thread Title
+                Post Title
               </Label>
               <Input
                 className="mt-2"
-                placeholder="Thread Title"
+                placeholder="Post Title"
                 id="title"
                 name="title"
                 value={formik.values.title}
@@ -45,11 +54,11 @@ export default function AddGroupDialog({
             </div>
             <div className="mt-4">
               <Label htmlFor="description" className="font-semibold text-sm">
-                Thread Description
+                Post Description
               </Label>
               <Input
                 className="mt-2"
-                placeholder="Thread Description"
+                placeholder="Post Description"
                 id="description"
                 name="description"
                 value={formik.values.description}
@@ -79,6 +88,7 @@ export default function AddGroupDialog({
                 Remove
               </Button>
             )}
+
             <DialogFooter className="mt-6">
               <Button type="submit">
                 {action === "create" ? "Create" : "Update"}

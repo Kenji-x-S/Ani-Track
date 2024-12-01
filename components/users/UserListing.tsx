@@ -1,34 +1,13 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useFormik } from "formik";
-import * as yup from "yup";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { AlertInterface } from "@/types";
 import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogTitle } from "../ui/dialog";
-import Alert from "../alert/Alert";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "../ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import PageContainer from "../ui/page-container";
 import Loader from "../ui/loader";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-import { Settings } from "lucide-react";
-import { IconEdit, IconSettings, IconTrash } from "@tabler/icons-react";
-import Image from "next/image";
 
 export default function UserListing() {
   const { push } = useRouter();

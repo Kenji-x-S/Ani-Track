@@ -23,7 +23,7 @@ export default async function handler(
     let groups: any[] = [];
 
     const [rows]: any = await pool.execute(
-      `SELECT * FROM groups ORDER BY createdAt DESC`
+      "SELECT * FROM `groups` ORDER BY createdAt DESC"
     );
     for (const r of rows) {
       const [creator]: any = await pool.execute(

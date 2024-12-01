@@ -1,7 +1,7 @@
 "use client";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import ThreadPostListing from "@/components/threads/ThreadPostListing";
+import ThreadPostListing from "@/components/posts/ThreadPostListing";
 
 const Post = ({ params }: { params: { id: string } }) => {
   const { push } = useRouter();

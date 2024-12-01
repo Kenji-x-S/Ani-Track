@@ -20,12 +20,14 @@ import {
 import { Dialog, DialogContent, DialogFooter } from "../ui/dialog";
 import { Textarea } from "../ui/textarea";
 import { DialogTitle } from "@radix-ui/react-dialog";
+import UpdateProfile from "./UpdateProfile";
 
 export default function Profile({ session }: { session: any }) {
   const [animes, setAnimes] = useState<Record<string, any>[]>([]);
   const [editIndex, setEditIndex] = useState(null);
   const [status, setStatus] = useState<string | null>();
   const [openReview, setOpenReview] = useState(false);
+  const [openEdit, setOpenEdit] = useState(false);
   const [follow, setFollow] = useState({
     followers: [],
     following: [],
@@ -176,8 +178,12 @@ export default function Profile({ session }: { session: any }) {
             </div>
           </div>
         </CardContent>
+        <CardFooter>
+          <Button onClick={() => setOpenEdit(true)}>Edit Profile</Button>
+        </CardFooter>
       </Card>
 
+      <UpdateProfile session={session} open={openEdit} setOpen={setOpenEdit} />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {animes.map((anime) => (
           <Card key={anime.mal_id} className="shadow-lg">

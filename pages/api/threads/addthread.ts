@@ -26,9 +26,9 @@ export default async function handler(
     return res.json({ error: "Unauthorized" });
   }
 
-  const { threadTitle, threadDescription, groupId } = req.body;
+  const { title, description } = req.body;
 
-  if (!threadTitle || !threadDescription || !groupId) {
+  if (!title || !description) {
     res.status(StatusCodes.BAD_REQUEST);
     return res.json({ error: "All fields are required" });
   }
@@ -40,19 +40,13 @@ export default async function handler(
       image = await uploadFile(req.body.image);
     }
     const [result]: any = await pool.execute(
-      `INSERT INTO threads (creatorId, threadTitle, threadDescription, image, groupId) VALUES (?, ?, ?, ?, ?)`,
-      [
-        session.user.id,
-        threadTitle,
-        threadDescription,
-        image ? image : null,
-        groupId,
-      ]
+      `INSERT INTO threads (creatorId, title, description, image) VALUES (?, ?, ?, ?)`,
+      [session.user.id, title, description, image ? image : null]
     );
 
     res.status(StatusCodes.CREATED);
     res.json({
-      message: "Thread created successfully",
+      message: "Group created successfully",
     });
   } catch (error) {
     console.error("Error creating user:", error);

@@ -3,7 +3,6 @@ import { StatusCodes } from "http-status-codes";
 import { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { options } from "../auth/[...nextauth]";
-import axios from "axios";
 
 export default async function handler(
   req: NextApiRequest,
@@ -21,29 +20,24 @@ export default async function handler(
       return res.json({ error: "Unauthorized" });
     }
     const pool = await getPool();
+    let posts: any[] = [];
 
     const [rows]: any = await pool.execute(
-      `SELECT * FROM animelist WHERE userId = ?`,
-      [req.body.userId ? parseInt(req.body.userId) : session.user.id]
+      `SELECT * FROM posts ORDER BY createdAt DESC`
     );
-    const withDataList = [];
-    for (const row of rows) {
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        const response = await axios.get(
-          `https://api.jikan.moe/v4/anime/${row.animeId}`
-        );
-        withDataList.push({
-          ...response?.data.data,
-          status: row.status,
-          review: row.review,
-          rating: row.rating,
-        });
-      } catch (error) {}
-    }
+    for (const r of rows) {
+      const [creator]: any = await pool.execute(
+        `SELECT * FROM users WHERE id = ?`,
+        [r.creatorId]
+      );
 
+      posts.push({
+        ...r,
+        creator: creator[0],
+      });
+    }
     res.status(StatusCodes.OK);
-    res.json(withDataList);
+    res.json(posts);
   } catch (error) {
     console.error(error);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR);

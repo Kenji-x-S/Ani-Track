@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useFormik } from "formik";
 import * as yup from "yup";
 import axios from "axios";
@@ -8,7 +8,6 @@ import { toast } from "react-toastify";
 import { AlertInterface } from "@/types";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import AddThreadDialog from "./AddThreadDialog";
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "../ui/dialog";
 import Alert from "../alert/Alert";
 import {
@@ -30,8 +29,10 @@ import {
 import { Settings } from "lucide-react";
 import { IconEdit, IconSettings, IconTrash } from "@tabler/icons-react";
 import Image from "next/image";
+import AddPostDialog from "./AddPostDialog";
+import { threadId } from "worker_threads";
 
-export default function ThreadListing() {
+export default function PostsListing() {
   const { push } = useRouter();
   const { data: session, status } = useSession({
     required: true,
@@ -39,6 +40,7 @@ export default function ThreadListing() {
       push("/sign-in");
     },
   });
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -47,12 +49,10 @@ export default function ThreadListing() {
   const [refresh, setRefresh] = useState(false);
   const [action, setAction] = useState("create");
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [threadId, setThreadId] = useState<number | null>(null);
+  const [postId, setPostId] = useState<number | null>(null);
   const [alert, setAlert] = useState<AlertInterface | null>(null);
-  const [threads, setThreads] = useState([]);
-  const [filteredThreads, setFilteredThreads] = useState<Record<string, any>>(
-    []
-  );
+  const [posts, setPosts] = useState([]);
+  const [filteredPosts, setFilteredPosts] = useState<Record<string, any>>([]);
 
   const [uploadCheck, setUploadCheck] = useState(false);
 
@@ -60,46 +60,52 @@ export default function ThreadListing() {
     setOpen(true);
   };
 
-  const [group, setGroup] = useState({
+  const [post, setPost] = useState({
     image: "",
     title: "",
     description: "",
+    threadId: null,
   });
 
   const validationSchema = yup.object({
     title: yup
       .string()
-      .required("Group Title is required")
-      .min(3, "Group Title must be at least 3 characters")
-      .max(50, "Group Title must be at most 50 characters"),
+      .required("Post Title is required")
+      .min(3, "Post Title must be at least 3 characters")
+      .max(50, "Post Title must be at most 50 characters"),
     description: yup
       .string()
-      .required("Group Description is required")
-      .min(3, "Group Description must be at least 3 characters")
-      .max(500, "Group Description must be at most 500 characters"),
+      .required("Post Description is required")
+      .min(3, "Post Description must be at least 3 characters")
+      .max(500, "Post Description must be at most 500 characters"),
   });
 
   const formik = useFormik({
     validateOnChange: false,
     validateOnBlur: true,
-    initialValues: group,
+    initialValues: post,
     validationSchema: validationSchema,
     onSubmit: (values) => {
-      let url = "/api/threads/addthread";
+      let url = "/api/posts/addpost";
       if (action == "view") {
-        url = "/api/threads/updatethread";
+        url = "/api/posts/updatepost";
       }
-      const manageThread = async () => {
+      const managePost = async () => {
         try {
           setLoading(true);
-          const response = await axios.post(url, { ...values, uploadCheck });
+          const response = await axios.post(url, {
+            ...values,
+            uploadCheck,
+            threadId: searchParams?.get("threadId"),
+          });
+          console.log(response.data);
           setAlert({
             open: true,
             title: "Success",
             description:
               action == "create"
-                ? "Thread Created Successfully"
-                : "Thread Updated Successfully",
+                ? "Post Created Successfully"
+                : "Post Updated Successfully",
             callback: () => {
               setAlert({ open: false });
             },
@@ -114,17 +120,19 @@ export default function ThreadListing() {
           handleClose();
         }
       };
-      manageThread();
+      managePost();
     },
   });
 
   useEffect(() => {
-    const fetchThreads = async () => {
+    const fetchPosts = async () => {
       try {
         setLoading(true);
-        const response = await axios.post("/api/threads/fetchthreads");
-        setThreads(response.data);
-        setFilteredThreads(response.data);
+        const response = await axios.post("/api/posts/fetchposts", {
+          threadId: searchParams?.get("threadId"),
+        });
+        setPosts(response.data);
+        setFilteredPosts(response.data);
       } catch (error: any) {
         toast.error(
           error?.response?.data?.error || error?.error || error?.message
@@ -133,20 +141,20 @@ export default function ThreadListing() {
         setLoading(false);
       }
     };
-    fetchThreads();
-  }, [refresh]);
+    fetchPosts();
+  }, [refresh, searchParams]);
 
   const deleteItem = async () => {
     try {
       setLoading(true);
       setOpenDeleteDialog(false);
-      const response = await axios.post("/api/threads/deletethread", {
-        id: threadId,
+      const response = await axios.post("/api/posts/deletepost", {
+        id: postId,
       });
       setAlert({
         open: true,
         title: "Success",
-        description: "Thread Deleted Successfully",
+        description: "Post Deleted Successfully",
         callback: () => {
           setAlert({ open: false });
         },
@@ -158,38 +166,6 @@ export default function ThreadListing() {
     } finally {
       setLoading(false);
       setOpenDeleteDialog(false);
-      setRefresh((prev) => !prev);
-    }
-  };
-  const joinThread = async (id: number) => {
-    try {
-      setLoading(true);
-      setOpenDeleteDialog(false);
-      const response = await axios.post("/api/threads/jointhread", {
-        id,
-      });
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.error || error?.error || error?.message
-      );
-    } finally {
-      setLoading(false);
-      setRefresh((prev) => !prev);
-    }
-  };
-  const leaveThread = async (id: number) => {
-    try {
-      setLoading(true);
-      setOpenDeleteDialog(false);
-      const response = await axios.post("/api/threads/leavethread", {
-        id,
-      });
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.error || error?.error || error?.message
-      );
-    } finally {
-      setLoading(false);
       setRefresh((prev) => !prev);
     }
   };
@@ -210,10 +186,10 @@ export default function ThreadListing() {
   const handleSearch = (e: any) => {
     setSearch(e.target.value);
     if (e.target.value === "") {
-      setFilteredThreads(threads);
+      setFilteredPosts(posts);
     } else {
-      setFilteredThreads(
-        threads.filter(
+      setFilteredPosts(
+        posts.filter(
           (item: any) =>
             item.title?.toLowerCase().includes(e.target.value.toLowerCase()) ||
             item?.description
@@ -230,13 +206,13 @@ export default function ThreadListing() {
         <Loader loading={loading} />
         <Alert alert={alert} />
         <CardHeader>
-          <CardTitle className="text-xl md:text-2xl">Threads</CardTitle>
+          <CardTitle className="text-xl md:text-2xl">Posts</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-2 justify-between mb-4">
             <Input
               className="w-full sm:max-w-xs"
-              placeholder="Search Groups"
+              placeholder="Search Threads"
               id="search"
               name="search"
               value={search}
@@ -247,11 +223,11 @@ export default function ThreadListing() {
               color="primary"
               className="w-full sm:w-auto"
             >
-              Create Thread
+              Create Post
             </Button>
           </div>
 
-          <AddThreadDialog
+          <AddPostDialog
             formik={formik}
             open={open}
             setOpen={setOpen}
@@ -276,7 +252,7 @@ export default function ThreadListing() {
           </Dialog>
 
           <div className="flex gap-4 flex-wrap">
-            {filteredThreads.map((t: any) => (
+            {filteredPosts.map((t: any) => (
               <Card>
                 <CardHeader>
                   <div className="flex gap-2 items-center">
@@ -317,7 +293,7 @@ export default function ThreadListing() {
                     </Avatar>
                   ))}
 
-                  {t.creatorId === session?.user?.id ? (
+                  {t.creatorId === session?.user?.id && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="default">
@@ -335,48 +311,20 @@ export default function ThreadListing() {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
-                            setThreadId(t.id);
+                            setPostId(t.id);
                             setOpenDeleteDialog(true);
                           }}
                         >
                           <IconTrash className="mr-2 h-4 w-4" />
                           <span>Delete</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            router.push(`/posts?threadId=${t.id}`);
-                          }}
-                        >
-                          <span>View Posts</span>
-                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  ) : (
-                    <div className="ml-2">
-                      {t.creatorId !== session?.user?.id &&
-                      !t.threadUsers?.find(
-                        (u: any) => u.id === session?.user?.id
-                      ) ? (
-                        <Button onClick={() => joinThread(t.id)}>
-                          Join Thread
-                        </Button>
-                      ) : (
-                        <>
-                          <Button onClick={() => leaveThread(t.id)}>
-                            Leave Thread
-                          </Button>
-
-                          <Button
-                            onClick={() =>
-                              router.push(`/posts?threadId=${t.id}`)
-                            }
-                          >
-                            View Posts
-                          </Button>
-                        </>
-                      )}
-                    </div>
                   )}
+
+                  <Button onClick={() => router.push(`/thread-posts/${t.id}`)}>
+                    View Details
+                  </Button>
                 </CardFooter>
               </Card>
             ))}

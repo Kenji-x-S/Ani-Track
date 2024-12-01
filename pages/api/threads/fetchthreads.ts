@@ -30,10 +30,23 @@ export default async function handler(
         `SELECT * FROM users WHERE id = ?`,
         [r.creatorId]
       );
+      const [threadUsers]: any = await pool.execute(
+        `SELECT * FROM threadusers WHERE threadId = ?`,
+        [r.id]
+      );
+      const threadusersConnected = [];
+      for (const t of threadUsers) {
+        const [user]: any = await pool.execute(
+          `SELECT * FROM users WHERE id = ?`,
+          [t.userId]
+        );
+        threadusersConnected.push(user[0]);
+      }
 
       threads.push({
         ...r,
         creator: creator[0],
+        threadUsers: threadusersConnected,
       });
     }
     res.status(StatusCodes.OK);

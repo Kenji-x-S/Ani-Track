@@ -7,6 +7,7 @@ import { AlertInterface } from "@/types";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
+import { Carousel } from "../ui/carousel";
 
 export default function UserProfile({ id }: { id: string }) {
   const { push } = useRouter();
@@ -19,7 +20,7 @@ export default function UserProfile({ id }: { id: string }) {
   const [loading, setLoading] = useState(false);
   const [refresh, setRefresh] = useState(false);
   const [alert, setAlert] = useState<AlertInterface | null>(null);
-
+  const [animes, setAnimes] = useState<Record<string, any>[]>([]);
   const [user, setUser] = useState<Record<string, any>>({});
 
   useEffect(() => {
@@ -39,7 +40,17 @@ export default function UserProfile({ id }: { id: string }) {
       }
     };
     fetchUser();
+    fetchAnimes();
   }, [refresh]);
+
+  const fetchAnimes = async () => {
+    try {
+      const response = await axios.post(`/api/anime/getuseranimes`, {
+        userId: id,
+      });
+      setAnimes(response.data);
+    } catch {}
+  };
   const followUser = async (id: number, check: boolean) => {
     try {
       setLoading(true);
@@ -111,6 +122,36 @@ export default function UserProfile({ id }: { id: string }) {
           )}
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {animes.map((anime) => (
+          <Card key={anime.mal_id} className="shadow-lg">
+            <Carousel className="mb-4">
+              {anime.images.jpg.large_image_url && (
+                <img
+                  src={anime.images.jpg.large_image_url}
+                  alt={anime.title}
+                  className="w-full h-48 object-cover rounded-t-md"
+                />
+              )}
+            </Carousel>
+            <CardContent>
+              <h3 className="text-lg font-semibold mb-2">{anime.title}</h3>
+              <p className="text-sm text-gray-600">
+                Year: {anime.year || "N/A"} | Duration:{" "}
+                {anime.duration || "N/A"}
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Genres:{" "}
+                {anime.genres.map((genre: any) => genre.name).join(", ")}
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Status: {anime.status}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

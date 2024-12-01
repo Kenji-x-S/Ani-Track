@@ -4,7 +4,6 @@ import { getPool } from "@/lib/pool";
 import { getServerSession } from "next-auth";
 import { options } from "../auth/[...nextauth]";
 import uploadFile from "@/lib/uploader";
-
 export const config = {
   api: {
     bodyParser: {
@@ -21,23 +20,35 @@ export default async function handler(
     res.status(StatusCodes.METHOD_NOT_ALLOWED);
     return res.json({ error: "Method not allowed" });
   }
-
   const session = await getServerSession(req, res, options);
   if (!session) {
     res.status(StatusCodes.UNAUTHORIZED);
     return res.json({ error: "Unauthorized" });
   }
 
+  const { title, description } = req.body;
+
+  if (!title || !description) {
+    res.status(StatusCodes.BAD_REQUEST);
+    return res.json({ error: "All fields are required" });
+  }
+
   try {
     const pool = await getPool();
-
-    // Corrected the DELETE query
-    await pool.execute(`DELETE FROM posts WHERE threadId = ?`, [req.body.id]);
-    await pool.execute(`DELETE FROM threads WHERE id = ?`, [req.body.id]);
+    let image;
+    if (req.body.uploadCheck) {
+      image = await uploadFile(req.body.image);
+    } else {
+      req.body.image;
+    }
+    const [result]: any = await pool.execute(
+      `UPDATE posts SET title = ?, description = ?, image = ? WHERE id = ?`,
+      [title, description, image ? image : null, req.body.id]
+    );
 
     res.status(StatusCodes.CREATED);
     res.json({
-      message: "Thread deleted successfully",
+      message: "Thread updated successfully",
     });
   } catch (error) {
     console.error("Error creating user:", error);
